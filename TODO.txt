@@ -1,0 +1,12 @@
+[x] Fix makefile to create stuff in the 
+    right folder
+[ ] Connect to git repo
+[ ] Remake verify file path using Fgetc to get one char from a potential file
+[ ] Refactor code into functions 
+[ ] Create filehelper functions
+[ ] Send corresponding html back to client
+[ ] Use <a> to access different websites
+[ ] Make it multithreaded?? (Clienthandler)
+[x] Add fun terminal text color
+[ ] Log the connections made to a json file
+[ ] Give json to client if request has "/connections" and "key=passwrod" 
