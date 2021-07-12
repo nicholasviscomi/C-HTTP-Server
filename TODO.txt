@@ -1,9 +1,9 @@
-[x] Fix makefile to create stuff in the 
-    right folder
-[ ] Connect to git repo
-[ ] Remake verify file path using Fgetc to get one char from a potential file
-[ ] Refactor code into functions 
-[ ] Create filehelper functions
+[x] Fix makefile to create stuff in the right folder
+[x] Connect to git repo
+[x] Remake verify file path using fopen to get one char from a potential file
+[x] Refactor code into functions 
+[x] Create filecontents func
+[x] Create string lib to help create response to the client
 [ ] Send corresponding html back to client
 [ ] Use <a> to access different websites
 [ ] Make it multithreaded?? (Clienthandler)

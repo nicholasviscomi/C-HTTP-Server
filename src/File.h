@@ -4,4 +4,6 @@
 int verifyFilePath(char* path);
 
 //returns the string contents of the file path or null in case of an error
-char* readFromFile(char* path);
+char* dataFromFile(char* path);
+
+char* fileContents(char *path);

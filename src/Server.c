@@ -6,7 +6,8 @@
 #include <string.h>
 
 #include "Colors.h"
-#include "FileHelper.h"
+#include "File.h"
+#include "String.h"
 
 #define PORT 8080
 
@@ -29,13 +30,21 @@ void bindSocket(int socket, struct sockaddr_in *address, socklen_t len) {
 
 const int BUFFSIZE = 30000;
 char buffer[BUFFSIZE]; //buffer for reading from socket
-void read_from_socket(int socket) {
-    read(socket , buffer, BUFFSIZE);
+void read_from_socket(int socket, void *buff, const int size) {
+    read(socket, buff, size);
     setTerminalColor(WHITE);
     printf("%s\n",buffer);
+    return;
 }
 
-int main(int argc, char const *argv[]) {
+void write_to_socket(int socket, char *msg, size_t len) {
+    write(socket, msg, len);
+    setTerminalColor(CYAN);
+    printf("------------------message sent-------------------\n");
+    return;
+}
+
+void run_server() {
     int server; //server_fd: _fd = file descriptor
     // long valread;
     
@@ -57,24 +66,42 @@ int main(int argc, char const *argv[]) {
     //param 2: backlog = the max length the queue of pending connections can get
     if (listen(server, 10) < 0) { printf("Error listening"); exit(EXIT_FAILURE); }
 
-    int new_socket;
+    int client;
     while(1) {
-        setTerminalColor(PURPLE); 
+        setTerminalColor(YELLOW); 
         printf("\n+++++++ Waiting for new connection ++++++++\n\n");
         
-        if ((new_socket = accept(server, (struct sockaddr *)&server_addr, (socklen_t*)&addrlen)) < 0) {
+        if ((client = accept(server, (struct sockaddr *)&server_addr, (socklen_t*)&addrlen)) < 0) {
             printf("Error accepting");
             exit(EXIT_FAILURE);
         }
 
-        read_from_socket(new_socket);
+        read_from_socket(client, buffer, BUFFSIZE); //the data that is read lives in char buffer[BUFFSIZE]
         
-        char *response = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello World!";
-        write(new_socket , response , strlen(response));
+        char *response = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
+        char *contents = fileContents("/Users/nickviscomi/Desktop/VSCode/C/HTTPServer/src/Web/index.html");
+      
+        char* contLen = malloc(20); 
+        sprintf(contLen, "%lu", strlen(contents));
+        response = concatenate(response, contLen); //add content length
+        
+        contents = concatenate("\n\n", contents); //add two new lines to format response correctly
+        response = concatenate(response, contents); //add contents
+
+        printf("=========================== Response ================================\n");
+        printf("%s", response);
+
+        write_to_socket(client, response, strlen(response));
+
         setTerminalColor(CYAN);
         printf("------------------message sent-------------------\n");
-        close(new_socket);
+
+        close(client);
     }
+}
+
+int main(int argc, char const *argv[]) {
+    run_server();
     return 0;
 }
 
@@ -83,161 +110,3 @@ int main(int argc, char const *argv[]) {
 
 
 
-
-
-
-
-
-
-
-// #include <stdio.h>
-// #include <sys/socket.h>
-// #include <unistd.h>
-// #include <stdlib.h>
-// #include <netinet/in.h>
-// #include <string.h>
-
-// #define PORT 8080
-// int main(int argc, char const *argv[]) {
-    
-//     int server_fd, new_socket; long valread;
-//     struct sockaddr_in address;
-//     int addrlen = sizeof(address);
-    
-//     // Creating socket file descriptor
-//     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-//         perror("In socket");
-//         exit(EXIT_FAILURE);
-//     }
-    
-
-//     address.sin_family = AF_INET;
-//     address.sin_addr.s_addr = INADDR_ANY;
-//     address.sin_port = htons( PORT );
-    
-//     memset(address.sin_zero, '\0', sizeof address.sin_zero);
-    
-    
-//     if (bind(server_fd, (struct sockaddr *)&address, sizeof(address))<0) {
-//         perror("In bind");
-//         exit(EXIT_FAILURE);
-//     }
-//     if (listen(server_fd, 10) < 0) {
-//         perror("In listen");
-//         exit(EXIT_FAILURE);
-//     }
-
-//     while(1) {
-//         printf("\n+++++++ Waiting for new connection ++++++++\n\n");
-//         if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen))<0) {
-//             perror("In accept");
-//             exit(EXIT_FAILURE);
-//         }
-        
-//         char buffer[30000] = {0};
-//         valread = read( new_socket , buffer, 30000);
-//         printf("%s\n",buffer );
-
-//         char *response = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello World";
-//         printf("\n%s\n", response);    
-
-
-//         write(new_socket , response , strlen(response));
-//         printf("------------------Hello message sent-------------------");
-//         close(new_socket);
-//     }
-//     return 0;
-// }
-
-
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <unistd.h>
-// #include <sys/socket.h>
-// #include <sys/types.h>
-// #include <sys/time.h>
-// #include <sys/ioctl.h>
-// #include <signal.h>
-// #include <stdarg.h>
-// #include <string.h>
-// #include <arpa/inet.h>
-// #include <errno.h>
-// #include <fcntl.h>
-// #include <netdb.h>
-
-// #define SERVER_PORT 80
-// #define SA struct sockaddr
-
-// #define MAXLINE 4096
-
-// void err_n_die(const char *fmt, ...);
-
-// int main(int argc, char *argv[]) {
-//     int sockfd, n;
-//     int sendbytes;
-//     struct sockaddr_in  servaddr;
-//     char sendline[MAXLINE];
-//     char recvline[MAXLINE];
-
-//     if (argc != 2) {
-//         err_n_die("usage: %s <address>", argv[0]);
-//     }
-
-//     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-//         err_n_die("error creating the socket");
-//     }
-
-//     bzero(&servaddr, sizeof(servaddr));
-//     servaddr.sin_family = AF_INET;
-//     servaddr.sin_port = htons(SERVER_PORT);
-
-//     if(inet_pton(AF_INET, argv[1], &servaddr.sin_addr) <= 0) {
-//         err_n_die("inet_pton error for: %s", argv[1]);
-//     }
-
-//     if (connect(sockfd, (SA *) &servaddr, sizeof(servaddr)) < 0) {
-//         err_n_die("connect failed");
-//     }
-
-//     sprintf(sendline, "GET / HTTP/1.1\r\n\r\n");
-//     sendbytes = strlen(sendline);
-
-//     if (write(sockfd, sendline, sendbytes) != sendbytes) {
-//         err_n_die("write error");
-//     }
-
-//     memset(recvline, 0, MAXLINE);
-
-//     while ((n = read(sockfd, recvline, MAXLINE-1)) > 0) {
-//         printf("%s", recvline);
-//     }
-
-//     if (n < 0) {
-//         err_n_die("read error");
-//     }
-    
-//     exit(0);
-//     return EXIT_SUCCESS;
-// }
-
-// void err_n_die(const char *fmt, ...) {
-//     int errno_save;
-//     va_list ap;
-
-//     errno_save = errno;
-
-//     va_start(ap, fmt);
-//     vfprintf(stdout, fmt, ap);
-//     fprintf(stdout, "\n");
-//     fflush(stdout);
-
-//     if (errno_save != 0) {
-//         fprintf(stdout, "(errno = %d)\n", errno_save);
-//         strerror(errno_save);
-//         fprintf(stdout, "\n");
-//         fflush(stdout);
-//     }
-
-//     va_end(ap);
-//     exit(1);
-// }
