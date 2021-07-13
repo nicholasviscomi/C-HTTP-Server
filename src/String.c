@@ -1,5 +1,8 @@
-#include "String.h"
 #include <stdlib.h>
+#include <string.h>
+
+#include "File.h"
+#include "String.h"
 
 
 size_t stringlen(const char *str) {
@@ -9,7 +12,7 @@ size_t stringlen(const char *str) {
 }
 
 char* concatenate(char *src, char *append) {
-    char *res = malloc(stringlen(src) + stringlen(append) + 1); //make result size of both param + \0
+    char *res = malloc(stringlen(src) + stringlen(append) + 1); //make res size of both param + \0
     int ptr = 0, temp = 0;
     
     while(src[temp] != '\0') { 
@@ -22,4 +25,43 @@ char* concatenate(char *src, char *append) {
     } //one by one add each char from append to res
 
     return res;
+}
+
+//GET /test HTTP/1.1 ===> /test
+char* parseQuery(const char *txt) {
+    int i =  0;
+    while (txt[i] != '/') {
+        i++;
+    } //get i to the start of the actualy request
+
+    int j = 0, buffSize = 100;
+    char *result = malloc(buffSize); 
+    while(txt[i] != ' ') {
+        if (i > buffSize) {
+            result = realloc(result, buffSize * 2);
+        }
+        result[j++] = txt[i++];
+    }
+
+    if (strcmp(result, "/") == 0) {
+        result = "/index.html";
+    }
+
+    return result;    
+}
+
+char* compileResponse(char *starter, char *query) {
+    char *contents = fileContents(query);
+    char *response = starter;
+
+    char* contLen = malloc(20); 
+    sprintf(contLen, "%lu", stringlen(contents)); //put content length into string variable
+
+    response = concatenate(response, contLen); //add content length
+
+    contents = concatenate("\n\n", contents); //add two new lines to format response correctly
+
+    response = concatenate(response, contents); //add contents
+
+    return response;
 }

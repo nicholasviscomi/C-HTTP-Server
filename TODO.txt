@@ -4,7 +4,8 @@
 [x] Refactor code into functions 
 [x] Create filecontents func
 [x] Create string lib to help create response to the client
-[ ] Send corresponding html back to client
+[x] Send corresponding html back to client
+[ ] Send back 404 if file not found
 [ ] Use <a> to access different websites
 [ ] Make it multithreaded?? (Clienthandler)
 [x] Add fun terminal text color

@@ -65,6 +65,7 @@ char* fileContents(char *path) {
     }
 
     FILE *stream = fopen(path, "r");
+    if (stream == NULL) return NULL;
 
     int capacity = 200, i = 0;
     char *buffer = malloc(capacity);
@@ -74,7 +75,7 @@ char* fileContents(char *path) {
         if (c == '\n') {
             continue;
         }
-        
+
         i++;
 
         if (i+1 >= capacity) {

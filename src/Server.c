@@ -10,6 +10,10 @@
 #include "String.h"
 
 #define PORT 8080
+char *HTTPSuccess = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
+char *HTTPError = "HTTP/1.1 404 Not Found\nContent-Type: text/html\nContent-Length: ";
+char *FileStarter = "/Users/nickviscomi/Desktop/VSCode/C/HTTPServer/src/Web";
+char *FileNotFoundPath = "/Users/nickviscomi/Desktop/VSCode/C/HTTPServer/src/Web/404.html";
 
 int initSocket(int domain, int type, int protocol) {
     int sock;
@@ -42,6 +46,14 @@ void write_to_socket(int socket, char *msg, size_t len) {
     setTerminalColor(CYAN);
     printf("------------------message sent-------------------\n");
     return;
+}
+
+void error_response() {
+
+}
+
+void success_response(char *contents) {
+
 }
 
 void run_server() {
@@ -78,25 +90,34 @@ void run_server() {
 
         read_from_socket(client, buffer, BUFFSIZE); //the data that is read lives in char buffer[BUFFSIZE]
         
-        char *response = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
-        char *contents = fileContents("/Users/nickviscomi/Desktop/VSCode/C/HTTPServer/src/Web/index.html");
-      
-        char* contLen = malloc(20); 
-        sprintf(contLen, "%lu", strlen(contents));
-        response = concatenate(response, contLen); //add content length
-        
-        contents = concatenate("\n\n", contents); //add two new lines to format response correctly
-        response = concatenate(response, contents); //add contents
+        //--------draft and send response----------
+        char *query = parseQuery(buffer);
+        char *response;
+        char *starter = HTTPSuccess; 
+        query = concatenate(FileStarter, query);
+        if (verifyFilePath(query) == 0) {
+            query = FileNotFoundPath;
+            starter = HTTPError;
+        }
+
+        response = compileResponse(starter, query);
+         
+        // char *contents = fileContents(query);
+
+        // if (contents == NULL) { //error opening requested file—-send error response
+        //     // error_response();
+        //     response = compileResponse(HTTPError, query); 
+        // } else {
+        //     // success_response(contents);
+        //     response = compileResponse(HTTPSuccess, query);
+        // }
 
         printf("=========================== Response ================================\n");
         printf("%s", response);
 
-        write_to_socket(client, response, strlen(response));
+        write_to_socket(client, response, strlen(response)); 
 
-        setTerminalColor(CYAN);
-        printf("------------------message sent-------------------\n");
-
-        close(client);
+        close(client); 
     }
 }
 
