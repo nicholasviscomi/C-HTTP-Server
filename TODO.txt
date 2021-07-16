@@ -5,9 +5,11 @@
 [x] Create filecontents func
 [x] Create string lib to help create response to the client
 [x] Send corresponding html back to client
-[ ] Send back 404 if file not found
-[ ] Use <a> to access different websites
-[ ] Make it multithreaded?? (Clienthandler)
+[x] Send back 404 if file not found
+[x] Use <a> to access different websites
 [x] Add fun terminal text color
 [ ] Log the connections made to a json file
+    [x] func to get num of connections
+    [x] func to write connection to file *still needs to update nConnections manually*
+    [ ] get client IP and log it
 [ ] Give json to client if request has "/connections" and "key=passwrod" 

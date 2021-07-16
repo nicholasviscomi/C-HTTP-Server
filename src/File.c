@@ -5,6 +5,11 @@
 #define true 1
 #define false 0
 
+typedef struct {
+    char *text;
+    int len;
+} String;
+
 int verifyFilePath(char* path) {
     return (fopen(path, "r") != NULL) ? true : false;
 }
@@ -58,7 +63,7 @@ char* dataFromFile(char *path) {
     return "asldjkf";
 }
 
-char* fileContents(char *path) {
+char* fileContents(const char *path, int *plen) {
     if (verifyFilePath(path) == false) {
         printf("unverified path");
         return NULL; 
@@ -72,9 +77,9 @@ char* fileContents(char *path) {
     char c;
 
     while ((c = fgetc(stream)) != EOF) {
-        if (c == '\n') {
-            continue;
-        }
+        // if (c == '\n') {
+        //     continue;
+        // }
 
         i++;
 
@@ -90,5 +95,7 @@ char* fileContents(char *path) {
     }
 
     buffer[i] = '\0';
+    if (plen != NULL) *plen = i;
+
     return buffer;
 }

@@ -9,4 +9,8 @@ char* concatenate(char *src, char *append);
 //takes HTTP GET request from web client and returns the clients request (i.e. /connections.json&password=123)
 char* parseQuery(const char *txt);
 
+//puts together HTTP response
 char* compileResponse(char *starter, char *query);
+
+//trims the end of a string
+void strTrim(char *s, int trimLen, size_t len);

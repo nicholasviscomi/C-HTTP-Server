@@ -51,7 +51,7 @@ char* parseQuery(const char *txt) {
 }
 
 char* compileResponse(char *starter, char *query) {
-    char *contents = fileContents(query);
+    char *contents = fileContents(query, NULL);
     char *response = starter;
 
     char* contLen = malloc(20); 
@@ -64,4 +64,10 @@ char* compileResponse(char *starter, char *query) {
     response = concatenate(response, contents); //add contents
 
     return response;
+}
+
+void strTrim(char *s, int trimLen, size_t len) {
+    // s = realloc(s, len-trimLen);
+    // s[len-trimLen] = '\0';
+    return;
 }

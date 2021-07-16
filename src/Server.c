@@ -8,12 +8,14 @@
 #include "Colors.h"
 #include "File.h"
 #include "String.h"
+#include "json.h"
 
 #define PORT 8080
 char *HTTPSuccess = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
 char *HTTPError = "HTTP/1.1 404 Not Found\nContent-Type: text/html\nContent-Length: ";
 char *FileStarter = "/Users/nickviscomi/Desktop/VSCode/C/HTTPServer/src/Web";
 char *FileNotFoundPath = "/Users/nickviscomi/Desktop/VSCode/C/HTTPServer/src/Web/404.html";
+const char *connectionsPath = "/Users/nickviscomi/Desktop/VSCode/C/HTTPServer/src/Database/Connection.json";
 
 int initSocket(int domain, int type, int protocol) {
     int sock;
@@ -44,16 +46,8 @@ void read_from_socket(int socket, void *buff, const int size) {
 void write_to_socket(int socket, char *msg, size_t len) {
     write(socket, msg, len);
     setTerminalColor(CYAN);
-    printf("------------------message sent-------------------\n");
+    printf("\n------------------message sent-------------------\n");
     return;
-}
-
-void error_response() {
-
-}
-
-void success_response(char *contents) {
-
 }
 
 void run_server() {
@@ -101,18 +95,8 @@ void run_server() {
         }
 
         response = compileResponse(starter, query);
-         
-        // char *contents = fileContents(query);
 
-        // if (contents == NULL) { //error opening requested file—-send error response
-        //     // error_response();
-        //     response = compileResponse(HTTPError, query); 
-        // } else {
-        //     // success_response(contents);
-        //     response = compileResponse(HTTPSuccess, query);
-        // }
-
-        printf("=========================== Response ================================\n");
+        printf("=========================== Response ================================\n\n");
         printf("%s", response);
 
         write_to_socket(client, response, strlen(response)); 
@@ -122,7 +106,13 @@ void run_server() {
 }
 
 int main(int argc, char const *argv[]) {
-    run_server();
+    // run_server();
+
+    // int success = logConnection(__DATE__, __TIME__, "/index.html", "GET");
+    char *fp = fileContents(connectionsPath, NULL);
+    setNumConnections(fp, strlen(fp));
+    // printf("JSON File After: \n%s\n", fileContents(connectionsPath, NULL));
+
     return 0;
 }
 
