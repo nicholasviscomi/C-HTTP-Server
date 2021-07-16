@@ -108,10 +108,10 @@ void run_server() {
 int main(int argc, char const *argv[]) {
     // run_server();
 
-    // int success = logConnection(__DATE__, __TIME__, "/index.html", "GET");
+    int success = logConnection(__DATE__, __TIME__, "/index.html", "GET");
     char *fp = fileContents(connectionsPath, NULL);
     setNumConnections(fp, strlen(fp));
-    // printf("JSON File After: \n%s\n", fileContents(connectionsPath, NULL));
+    printf("JSON File After: \n%s\n", fileContents(connectionsPath, NULL));
 
     return 0;
 }
