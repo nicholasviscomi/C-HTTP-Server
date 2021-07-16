@@ -9,7 +9,7 @@
 const char *connPath = "/Users/nickviscomi/Desktop/VSCode/C/HTTPServer/src/Database/Connection.json";
 const char *numConnectionsPath = "/Users/nickviscomi/Desktop/VSCode/C/HTTPServer/src/Database/NumConnections.txt";
 
-int logConnection(char *date, char *time, char *query, char *request) {
+int logConnection(char *date, char *time, char *query, char *request, char *IP, int port) {
     FILE *fp = fopen(connPath, "r");
     if (fp == NULL) return 0;
 
@@ -29,11 +29,11 @@ int logConnection(char *date, char *time, char *query, char *request) {
 
     //format new connection
     int nConnections = getNumConnections(fp); 
-    if (nConnections == 0) return NULL;
+    if (nConnections == 0) return 0;
     fclose(fp); //no longer need to read from this file
 
-    char *newConnection = malloc(100);
-    sprintf(newConnection, "\"%d\" : {\n\t\"time\" : \"%s|%s\",\n\t\"query\" : \"%s\",\n\t\"request\" : \"%s\"\n}\n}", ++nConnections, date, time, query, request);
+    char *newConnection = malloc(300);
+    sprintf(newConnection, "\"%d\" : {\n\t\"time\" : \"%s|%s\",\n\t\"query\" : \"%s\",\n\t\"request\" : \"%s\",\n\t\"IP\" : \"%s\",\n\t\"PORT\" : \"%d\"\n}\n}", ++nConnections, date, time, query, request, IP, port);
     size_t newConnLen = strlen(newConnection);
     contents = realloc(contents, (contLen + 2) + newConnLen + 1);
     if (contents == NULL) return 0;
@@ -48,6 +48,8 @@ int logConnection(char *date, char *time, char *query, char *request) {
     if (fp == NULL) return 0;
     fprintf(fp, "%s", contents);
     fclose(fp);
+
+    setNumConnections();
     return 1;
 }
 

@@ -8,8 +8,8 @@
 [x] Send back 404 if file not found
 [x] Use <a> to access different websites
 [x] Add fun terminal text color
-[ ] Log the connections made to a json file
+[x] Log the connections made to a json file
     [x] func to get num of connections
     [x] func to write connection to file *still needs to update nConnections manually*
-    [ ] get client IP and log it
-[ ] Give json to client if request has "/connections" and "key=passwrod" 
+    [x] get client IP and log it
+[x] Give json to client if request has "/Connection.json

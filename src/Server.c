@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <netinet/in.h>
 #include <string.h>
+#include <arpa/inet.h>
 
 #include "Colors.h"
 #include "File.h"
@@ -13,6 +14,8 @@
 #define PORT 8080
 char *HTTPSuccess = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
 char *HTTPError = "HTTP/1.1 404 Not Found\nContent-Type: text/html\nContent-Length: ";
+char *ConnectionsReq = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: ";
+
 char *FileStarter = "/Users/nickviscomi/Desktop/VSCode/C/HTTPServer/src/Web";
 char *FileNotFoundPath = "/Users/nickviscomi/Desktop/VSCode/C/HTTPServer/src/Web/404.html";
 const char *connectionsPath = "/Users/nickviscomi/Desktop/VSCode/C/HTTPServer/src/Database/Connection.json";
@@ -39,7 +42,6 @@ char buffer[BUFFSIZE]; //buffer for reading from socket
 void read_from_socket(int socket, void *buff, const int size) {
     read(socket, buff, size);
     setTerminalColor(WHITE);
-    printf("%s\n",buffer);
     return;
 }
 
@@ -58,15 +60,15 @@ void run_server() {
     server = initSocket(AF_INET, SOCK_STREAM, 0);  //I think in java terms this is a server socket
 
     //Step 2: Assign that socket to a port (bind) 
-    struct sockaddr_in server_addr; //socket address internet: sockaddr is a generic type while sockaddr_in is more specific
-    int addrlen = sizeof(server_addr);
+    struct sockaddr_in address; //will eventually be filled out with client informations 
+    int addrlen = sizeof(address);
 
-    memset((char *)&server_addr, '\0', addrlen); //I think its just setting everything else to zero
-    server_addr.sin_family = AF_INET; //address family used to setup the socket
-    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    server_addr.sin_port = htons(PORT); //port number; host to network short (htons)
+    memset((char *) &address, '\0', addrlen); //I think its just setting everything else to zero
+    address.sin_family = AF_INET; //address family used to setup the socket
+    address.sin_addr.s_addr = htonl(INADDR_ANY);
+    address.sin_port = htons(PORT); //port number; host to network short (htons)
     
-    bindSocket(server, &server_addr, addrlen);
+    bindSocket(server, &address, addrlen);
 
     //Step 3: Wait for incoming connections
     //param 2: backlog = the max length the queue of pending connections can get
@@ -77,7 +79,7 @@ void run_server() {
         setTerminalColor(YELLOW); 
         printf("\n+++++++ Waiting for new connection ++++++++\n\n");
         
-        if ((client = accept(server, (struct sockaddr *)&server_addr, (socklen_t*)&addrlen)) < 0) {
+        if ((client = accept(server, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
             printf("Error accepting");
             exit(EXIT_FAILURE);
         }
@@ -86,18 +88,32 @@ void run_server() {
         
         //--------draft and send response----------
         char *query = parseQuery(buffer);
+
+        char *ipBuffer; 
+        ipBuffer = inet_ntoa(address.sin_addr);
+        int clientPort = ntohs(address.sin_port);
+        printf("IP: %s\nPORT: %d", ipBuffer, clientPort);
+
+        if (logConnection(__DATE__, __TIME__, query, "GET", ipBuffer, clientPort) == 0) {
+            printf("error logging connection!!!");
+        }
+
         char *response;
         char *starter = HTTPSuccess; 
-        query = concatenate(FileStarter, query);
-        if (verifyFilePath(query) == 0) {
-            query = FileNotFoundPath;
+        char* full_query = concatenate(FileStarter, query);
+        
+        if (strcmp(query, "/Connection.json") == 0) {
+            starter = ConnectionsReq;
+            full_query = connectionsPath;
+        } else if (verifyFilePath(full_query) == 0) {
+            full_query = FileNotFoundPath;
             starter = HTTPError;
         }
 
-        response = compileResponse(starter, query);
+        response = compileResponse(starter, full_query);
 
         printf("=========================== Response ================================\n\n");
-        printf("%s", response);
+        // printf("%s", response);
 
         write_to_socket(client, response, strlen(response)); 
 
@@ -106,12 +122,12 @@ void run_server() {
 }
 
 int main(int argc, char const *argv[]) {
-    // run_server();
+    run_server();
 
-    int success = logConnection(__DATE__, __TIME__, "/index.html", "GET");
-    char *fp = fileContents(connectionsPath, NULL);
-    setNumConnections(fp, strlen(fp));
-    printf("JSON File After: \n%s\n", fileContents(connectionsPath, NULL));
+    // int success = logConnection(__DATE__, __TIME__, "/index.html", "GET");
+    // char *fp = fileContents(connectionsPath, NULL);
+    // setNumConnections(fp, strlen(fp));
+    // printf("JSON File After: \n%s\n", fileContents(connectionsPath, NULL));
 
     return 0;
 }
