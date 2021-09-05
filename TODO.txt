@@ -10,6 +10,10 @@
 [x] Add fun terminal text color
 [x] Log the connections made to a json file
     [x] func to get num of connections
-    [x] func to write connection to file *still needs to update nConnections manually*
+    [x] func to write connection to file
     [x] get client IP and log it
 [x] Give json to client if request has "/Connection.json
+[ ] Make a tcp client to test if the server gives the excpected response
+[ ] Maybe make some sort of interface where the web page can ask for the availabe file names
+[ ] Verify that the request is a GET request before parsing query
+[ ] Allow for POST requests

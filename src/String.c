@@ -52,6 +52,7 @@ char* parseQuery(const char *txt) {
 
 char* compileResponse(char *starter, char *query) {
     char *contents = fileContents(query, NULL);
+    if (contents == NULL) return NULL;
     char *response = starter;
 
     char* contLen = malloc(20); 

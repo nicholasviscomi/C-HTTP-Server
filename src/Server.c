@@ -5,11 +5,13 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <time.h>
 
 #include "Colors.h"
 #include "File.h"
 #include "String.h"
 #include "json.h"
+#include "Util.h"
 
 #define PORT 8080
 char *HTTPSuccess = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
@@ -18,7 +20,7 @@ char *ConnectionsReq = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Lengt
 
 char *FileStarter = "/Users/nickviscomi/Desktop/VSCode/C/HTTPServer/src/Web";
 char *FileNotFoundPath = "/Users/nickviscomi/Desktop/VSCode/C/HTTPServer/src/Web/404.html";
-const char *connectionsPath = "/Users/nickviscomi/Desktop/VSCode/C/HTTPServer/src/Database/Connection.json";
+char *connectionsPath = "/Users/nickviscomi/Desktop/VSCode/C/HTTPServer/src/Database/Connection.json";
 
 int initSocket(int domain, int type, int protocol) {
     int sock;
@@ -47,21 +49,60 @@ void read_from_socket(int socket, void *buff, const int size) {
 
 void write_to_socket(int socket, char *msg, size_t len) {
     write(socket, msg, len);
-    setTerminalColor(CYAN);
-    printf("\n------------------message sent-------------------\n");
+    setTerminalColor(GREEN);
     return;
 }
 
-void run_server() {
-    int server; //server_fd: _fd = file descriptor
-    // long valread;
-    
+struct sockaddr_in address; //will eventually be filled out with client informations 
+int addrlen, server; //server_fd: _fd = file descriptor
+void server_loop() {
+    int client;
+    while(1) {
+        setTerminalColor(YELLOW); printf("\n+++++++ Waiting for new connection ++++++++\n\n");
+        
+        if ((client = accept(server, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
+            printf("Error accepting");
+            exit(EXIT_FAILURE);
+        }
+
+        read_from_socket(client, buffer, BUFFSIZE); //the data that is read lives in char buffer[BUFFSIZE]
+        
+        //--------draft and send response----------
+        char *query = parseQuery(buffer);
+        char *response, *starter = HTTPSuccess;
+        char *full_query = concatenate(FileStarter, query);
+        
+        printf("Query: %s\n", query);
+        if (strcmp(query, "/Connection.json") == 0) {
+            printf("Connections request!!\n");
+            starter = ConnectionsReq;
+            full_query = connectionsPath;
+        } else if (verifyFilePath(full_query) == 0) {
+            printf("File Not Found!\n");
+            full_query = FileNotFoundPath;
+            starter = HTTPError;
+        }
+
+        response = compileResponse(starter, full_query);
+        write_to_socket(client, response, strlen(response)); 
+
+        char *ipBuffer = inet_ntoa(address.sin_addr);
+        int clientPort = ntohs(address.sin_port);
+        setTerminalColor(RED); printf("IP: %s\nPORT: %d", ipBuffer, clientPort);
+
+        if (logConnection(curr_time(), query, "GET", ipBuffer, clientPort) == 0) {
+            printf("error logging connection!!!");
+        }
+
+        close(client); 
+    }
+}
+void run_server() {    
     //Step 1: Create Socket
     server = initSocket(AF_INET, SOCK_STREAM, 0);  //I think in java terms this is a server socket
 
     //Step 2: Assign that socket to a port (bind) 
-    struct sockaddr_in address; //will eventually be filled out with client informations 
-    int addrlen = sizeof(address);
+    addrlen = sizeof(address);
 
     memset((char *) &address, '\0', addrlen); //I think its just setting everything else to zero
     address.sin_family = AF_INET; //address family used to setup the socket
@@ -74,66 +115,10 @@ void run_server() {
     //param 2: backlog = the max length the queue of pending connections can get
     if (listen(server, 10) < 0) { printf("Error listening"); exit(EXIT_FAILURE); }
 
-    int client;
-    while(1) {
-        setTerminalColor(YELLOW); 
-        printf("\n+++++++ Waiting for new connection ++++++++\n\n");
-        
-        if ((client = accept(server, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
-            printf("Error accepting");
-            exit(EXIT_FAILURE);
-        }
-
-        read_from_socket(client, buffer, BUFFSIZE); //the data that is read lives in char buffer[BUFFSIZE]
-        
-        //--------draft and send response----------
-        char *query = parseQuery(buffer);
-
-        char *ipBuffer; 
-        ipBuffer = inet_ntoa(address.sin_addr);
-        int clientPort = ntohs(address.sin_port);
-        printf("IP: %s\nPORT: %d", ipBuffer, clientPort);
-
-        if (logConnection(__DATE__, __TIME__, query, "GET", ipBuffer, clientPort) == 0) {
-            printf("error logging connection!!!");
-        }
-
-        char *response;
-        char *starter = HTTPSuccess; 
-        char* full_query = concatenate(FileStarter, query);
-        
-        if (strcmp(query, "/Connection.json") == 0) {
-            starter = ConnectionsReq;
-            full_query = connectionsPath;
-        } else if (verifyFilePath(full_query) == 0) {
-            full_query = FileNotFoundPath;
-            starter = HTTPError;
-        }
-
-        response = compileResponse(starter, full_query);
-
-        printf("=========================== Response ================================\n\n");
-        // printf("%s", response);
-
-        write_to_socket(client, response, strlen(response)); 
-
-        close(client); 
-    }
+    server_loop();
 }
 
 int main(int argc, char const *argv[]) {
     run_server();
-
-    // int success = logConnection(__DATE__, __TIME__, "/index.html", "GET");
-    // char *fp = fileContents(connectionsPath, NULL);
-    // setNumConnections(fp, strlen(fp));
-    // printf("JSON File After: \n%s\n", fileContents(connectionsPath, NULL));
-
     return 0;
 }
-
-
-
-
-
-
